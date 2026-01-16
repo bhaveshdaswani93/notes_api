@@ -27,14 +27,24 @@ export class UsersService {
     return bcrypt.compare(password, user.passwordHash);
   }
 
-  async findOrCreateFromOAuth(provider: string, providerId: string, profile: any) {
-    let user = this.users.find((u) => u.provider === provider && u.providerId === providerId);
+  async findOrCreateFromOAuth(
+    provider: string,
+    providerId: string,
+    profile: any,
+  ) {
+    let user = this.users.find(
+      (u) => u.provider === provider && u.providerId === providerId,
+    );
     if (!user) {
       user = {
         id: randomUUID(),
         provider,
         providerId,
-        username: profile.username || profile.login || profile.email || `${provider}_${providerId}`,
+        username:
+          profile.username ||
+          profile.login ||
+          profile.email ||
+          `${provider}_${providerId}`,
         email: profile.email,
       };
       this.users.push(user);

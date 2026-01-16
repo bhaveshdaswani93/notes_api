@@ -1,17 +1,21 @@
-import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { UsersModule } from '../users/users.module';
-import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './constants';
-import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from './jwt.strategy';
-import { OAuthStrategy } from './oauth.strategy';
 import { AuthController } from './auth.controller';
+import { Auth0JwtMiddleware } from './auth0-jwt.middleware';
+import { RequireScopeMiddleware } from './require-scope.middleware';
 
 @Module({
-  imports: [UsersModule, PassportModule, JwtModule.register({ secret: jwtConstants.secret, signOptions: { expiresIn: '1h' } })],
-  providers: [AuthService, JwtStrategy, OAuthStrategy],
+  imports: [UsersModule],
+  providers: [],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [],
 })
-export class AuthModule {}
+export class AuthModule {
+  configure(consumer: MiddlewareConsumer) {
+    const auth0Middleware = new Auth0JwtMiddleware(
+      process.env.AUTH0_DOMAIN || '',
+      process.env.AUTH0_AUDIENCE || '',
+    );
+    consumer.apply(auth0Middleware.use.bind(auth0Middleware)).forRoutes('*');
+  }
+}

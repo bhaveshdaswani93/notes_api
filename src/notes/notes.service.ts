@@ -8,7 +8,14 @@ export class NotesService {
 
   create(ownerId: string, title: string, content: string) {
     const now = new Date().toISOString();
-    const note: Note = { id: randomUUID(), ownerId, title, content, createdAt: now, updatedAt: now };
+    const note: Note = {
+      id: randomUUID(),
+      ownerId,
+      title,
+      content,
+      createdAt: now,
+      updatedAt: now,
+    };
     this.notes.push(note);
     return note;
   }

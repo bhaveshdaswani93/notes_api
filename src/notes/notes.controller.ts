@@ -1,31 +1,43 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Param, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Patch,
+  Req,
+} from '@nestjs/common';
+import { Request } from 'express';
 import { NotesService } from './notes.service';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import '../auth/types';
 
 @Controller('notes')
-@UseGuards(JwtAuthGuard)
 export class NotesController {
   constructor(private readonly notesService: NotesService) {}
 
   @Post()
-  create(@Request() req, @Body() dto: CreateNoteDto) {
-    return this.notesService.create(req.user.id, dto.title, dto.content);
+  create(@Req() req: Request, @Body() dto: CreateNoteDto) {
+    const userId = req.jwtPayload?.sub || '';
+    return this.notesService.create(userId, dto.title, dto.content);
   }
 
   @Get()
-  list(@Request() req) {
-    return this.notesService.listForUser(req.user.id);
+  list(@Req() req: Request) {
+    const userId = req.jwtPayload?.sub || '';
+    return this.notesService.listForUser(userId);
   }
 
   @Get(':id')
-  get(@Request() req, @Param('id') id: string) {
-    return this.notesService.findOne(req.user.id, id);
+  get(@Req() req: Request, @Param('id') id: string) {
+    const userId = req.jwtPayload?.sub || '';
+    return this.notesService.findOne(userId, id);
   }
 
   @Patch(':id')
-  patch(@Request() req, @Param('id') id: string, @Body() dto: UpdateNoteDto) {
-    return this.notesService.update(req.user.id, id, dto as any);
+  patch(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateNoteDto) {
+    const userId = req.jwtPayload?.sub || '';
+    return this.notesService.update(userId, id, dto as any);
   }
 }
