@@ -1,8 +1,16 @@
-import { JWTPayload, JWTHeaderParameters } from 'jose';
+// Scalekit User type
+export interface ScalekitUser {
+  id: string;
+  email?: string;
+  name?: string;
+  username?: string;
+  organizationId?: string;
+  [key: string]: any;
+}
 
 declare module 'express' {
   interface Request {
-    jwtPayload?: JWTPayload;
-    jwtProtectedHeader?: JWTHeaderParameters;
+    user?: ScalekitUser;
+    accessToken?: string;
   }
 }

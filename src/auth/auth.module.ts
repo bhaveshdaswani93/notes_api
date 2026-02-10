@@ -1,21 +1,25 @@
-import { Module, MiddlewareConsumer } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
-import { Auth0JwtMiddleware } from './auth0-jwt.middleware';
-import { RequireScopeMiddleware } from './require-scope.middleware';
+import { AuthService } from './auth.service';
+import { ScalekitJwtMiddleware } from './scalekit-session.middleware';
 
 @Module({
   imports: [UsersModule],
-  providers: [],
+  providers: [AuthService],
   controllers: [AuthController],
-  exports: [],
+  exports: [AuthService],
 })
 export class AuthModule {
   configure(consumer: MiddlewareConsumer) {
-    const auth0Middleware = new Auth0JwtMiddleware(
-      process.env.AUTH0_DOMAIN || '',
-      process.env.AUTH0_AUDIENCE || '',
-    );
-    consumer.apply(auth0Middleware.use.bind(auth0Middleware)).forRoutes('*');
+    // Apply JWT middleware to all routes except public auth endpoints
+    consumer
+      .apply(ScalekitJwtMiddleware)
+      .exclude(
+        { path: 'auth/login', method: RequestMethod.GET },
+        { path: 'auth/callback', method: RequestMethod.GET },
+        { path: 'auth/refresh', method: RequestMethod.POST },
+      )
+      .forRoutes('*');
   }
 }

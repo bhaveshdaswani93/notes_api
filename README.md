@@ -1,126 +1,349 @@
-# Notes API (demo)
+# Notes API with Scalekit Authentication
 
-Simple NestJS demo for Notes with JWT and OAuth2 (MCP) login.
+NestJS API for Notes with **Scalekit JWT Authentication** - optimized for Next.js frontend and MCP server integration.
 
-Environment variables (using Auth0):
+## Features
 
-- `AUTH0_DOMAIN` — your Auth0 domain (e.g. `your-tenant.auth0.com`).
-- `AUTH0_AUDIENCE` — the API audience configured in Auth0 for this API.
-- `AUTH0_ISSUER` — optional issuer (defaults to `https://<AUTH0_DOMAIN>/`).
+- 🔐 **JWT Bearer Token Authentication** using Scalekit
+- 🏢 **Enterprise SSO Support** (SAML, OIDC)
+- 🌐 **Multi-organization Support**
+- 🔄 **Token Refresh Flow**
+- 🎨 **Customizable Hosted Login**
+- ⚡ **Next.js & MCP Server Ready**
 
-This API validates JWTs issued by Auth0 using the provider's JWKS endpoint. Register/login should be handled in Auth0 (or your MCP server) — obtain a Bearer token from Auth0 and call the protected endpoints.
+## Quick Start
 
-Quick start:
-
-```bash
-npm install
-# set env vars (AUTH0_DOMAIN, AUTH0_AUDIENCE)
-npm run start:dev
-```
-
-Endpoints (use `Authorization: Bearer <token>` where `<token>` is an Auth0-issued JWT):
-
-- `GET /auth/profile` — returns token payload for the caller
-- Protected notes endpoints:
-  - `POST /notes` { title, content }
-  - `GET /notes`
-  - `GET /notes/:id`
-  - `PATCH /notes/:id` { title?, content? }
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+### 1. Install Dependencies
 
 ```bash
-$ yarn install
+yarn install
 ```
 
-## Compile and run the project
+### 2. Configure Environment
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+cp .env.example .env
 ```
 
-## Run tests
+Edit `.env` with your Scalekit credentials from [Scalekit Dashboard](https://app.scalekit.com):
+
+```env
+SCALEKIT_ENV_URL=https://yourtenant.scalekit.com
+SCALEKIT_CLIENT_ID=skc_...
+SCALEKIT_CLIENT_SECRET=sks_...
+SCALEKIT_REDIRECT_URI=http://localhost:3000/auth/callback
+SCALEKIT_POST_LOGOUT_REDIRECT_URI=http://localhost:3000
+FRONTEND_URL=http://localhost:3001
+PORT=3000
+```
+
+### 3. Start Development Server
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+yarn start:dev
 ```
 
-## Deployment
+## Authentication Flow
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### For Next.js Frontend
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+```typescript
+// 1. Initiate login
+const response = await fetch('http://localhost:3000/auth/login');
+const { authorizationUrl } = await response.json();
+
+// 2. Redirect user to Scalekit hosted login
+window.location.href = authorizationUrl;
+
+// 3. Handle callback (Scalekit redirects to /auth/callback)
+// Your backend receives code and exchanges for tokens
+// Response: { accessToken, refreshToken, idToken, user }
+
+// 4. Store tokens in your frontend (localStorage or state management)
+localStorage.setItem('accessToken', data.accessToken);
+localStorage.setItem('refreshToken', data.refreshToken);
+
+// 5. Make authenticated requests
+const notes = await fetch('http://localhost:3000/notes', {
+  headers: {
+    'Authorization': `Bearer ${accessToken}`
+  }
+});
+
+// 6. Refresh token when expired
+const refreshResponse = await fetch('http://localhost:3000/auth/refresh', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ refreshToken })
+});
+```
+
+### For MCP Server
+
+```typescript
+// MCP server can use the same JWT tokens
+const accessToken = '<token-from-client>';
+
+// Make authenticated requests
+const response = await fetch('http://localhost:3000/notes', {
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+## API Endpoints
+
+### Public Endpoints
+
+#### `GET /auth/login`
+Initiates Scalekit hosted login flow.
+
+**Query Parameters:**
+- `organization_id` (optional): Organization ID for SSO
+- `connection_id` (optional): Specific SSO connection ID
+
+**Response:**
+```json
+{
+  "authorizationUrl": "https://yourtenant.scalekit.com/oauth/authorize?...",
+  "state": "random-state-value",
+  "message": "Redirect user to authorizationUrl to complete login"
+}
+```
+
+#### `GET /auth/callback`
+OAuth callback handler. Exchanges authorization code for JWT tokens.
+
+**Query Parameters:**
+- `code`: Authorization code from Scalekit
+- `error` (optional): Error code if authentication failed
+
+**Response:**
+```json
+{
+  "accessToken": "eyJhbGc...",
+  "refreshToken": "refresh_token_here",
+  "idToken": "id_token_here",
+  "expiresIn": 3600,
+  "tokenType": "Bearer",
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "organizationId": "org_abc"
+  }
+}
+```
+
+#### `POST /auth/refresh`
+Refreshes access token using refresh token.
+
+**Body:**
+```json
+{
+  "refreshToken": "refresh_token_here"
+}
+```
+
+**Response:**
+```json
+{
+  "accessToken": "new_access_token",
+  "refreshToken": "new_refresh_token",
+  "idToken": "new_id_token",
+  "expiresIn": 3600,
+  "tokenType": "Bearer",
+  "user": { ... }
+}
+```
+
+### Protected Endpoints (Require `Authorization: Bearer <token>` header)
+
+#### `GET /auth/profile`
+Get current user profile.
+
+**Response:**
+```json
+{
+  "id": "user_123",
+  "email": "user@example.com",
+  "name": "John Doe",
+  "username": "johndoe",
+  "organizationId": "org_abc"
+}
+```
+
+#### `POST /auth/logout`
+Get Scalekit logout URL.
+
+**Body:**
+```json
+{
+  "idToken": "id_token_here"
+}
+```
+
+**Response:**
+```json
+{
+  "logoutUrl": "https://yourtenant.scalekit.com/oauth/logout?...",
+  "message": "Redirect user to logoutUrl to complete logout"
+}
+```
+
+#### `POST /notes`
+Create a new note.
+
+**Body:**
+```json
+{
+  "title": "My Note",
+  "content": "Note content here"
+}
+```
+
+#### `GET /notes`
+List all notes for authenticated user.
+
+#### `GET /notes/:id`
+Get specific note.
+
+#### `PATCH /notes/:id`
+Update note.
+
+**Body:**
+```json
+{
+  "title": "Updated Title",
+  "content": "Updated content"
+}
+```
+
+## Testing
+
+### Test Login Flow
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+# 1. Get authorization URL
+curl http://localhost:3000/auth/login
+
+# 2. Visit the authorizationUrl in browser and complete login
+# You'll be redirected to /auth/callback with a code parameter
+
+# 3. The callback endpoint returns tokens automatically
+# Store the accessToken from the response
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Test Protected Endpoints
 
-## Resources
+```bash
+# Set your access token
+export TOKEN="your_access_token_here"
 
-Check out a few resources that may come in handy when working with NestJS:
+# Get profile
+curl http://localhost:3000/auth/profile \
+  -H "Authorization: Bearer $TOKEN"
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Create note
+curl -X POST http://localhost:3000/notes \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test Note","content":"Hello Scalekit!"}'
+
+# List notes
+curl http://localhost:3000/notes \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Test Token Refresh
+
+```bash
+curl -X POST http://localhost:3000/auth/refresh \
+  -H "Content-Type": "application/json" \
+  -d '{"refreshToken":"your_refresh_token"}'
+```
+
+## Development Commands
+
+```bash
+# Install dependencies
+yarn install
+
+# Start development server (with hot reload)
+yarn start:dev
+
+# Build for production
+yarn build
+
+# Start production server
+yarn start:prod
+
+# Run tests
+yarn test
+
+# Run e2e tests
+yarn test:e2e
+
+# Lint code
+yarn lint
+
+# Format code
+yarn format
+```
+
+## Scalekit Dashboard Configuration
+
+1. **Create Application**: Go to [Scalekit Dashboard](https://app.scalekit.com)
+2. **Add Redirect URIs**:
+   - Development: `http://localhost:3000/auth/callback`
+   - Production: `https://api.yourdomain.com/auth/callback`
+3. **Get Credentials**: Copy Client ID and Client Secret
+4. **Configure Branding**: Customize hosted login page
+5. **Set Up SSO**: Add SAML/OIDC connections for organizations
+
+## Migration from Auth0
+
+This project was migrated from Auth0 to Scalekit.
+
+### Key Changes:
+- ✅ Bearer token authentication maintained
+- ✅ JWT validation via Scalekit SDK
+- ✅ Token refresh flow implemented
+- ✅ Compatible with Next.js and MCP servers
+- ✅ No cookie dependencies
+- ✅ Stateless authentication
+
+### Code Changes:
+- `req.jwtPayload.sub` → `req.user.id`
+- Auth0 JWT verification → Scalekit token validation
+- Authorization header format unchanged: `Bearer <token>`
+
+## Security Features
+
+- ✅ JWT Bearer token authentication
+- ✅ Token expiration and refresh
+- ✅ Scalekit's secure token validation
+- ✅ CORS configuration for frontend
+- ✅ State parameter for CSRF protection
+- ✅ Secure credential management
+
+## Documentation
+
+- [Scalekit Documentation](https://docs.scalekit.com)
+- [Scalekit APIs](https://docs.scalekit.com/apis)
+- [Full Stack Auth Guide](https://docs.scalekit.com/fsa)
+- [SDK Documentation](https://docs.scalekit.com/dev-kit)
+- [Next.js Integration](https://docs.scalekit.com/integrations/nextjs)
 
 ## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+For issues or questions:
+- Scalekit Support: support@scalekit.com
+- Scalekit Dashboard: https://app.scalekit.com
+- Documentation: https://docs.scalekit.com
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Built with ❤️ using [NestJS](https://nestjs.com) and [Scalekit](https://scalekit.com)

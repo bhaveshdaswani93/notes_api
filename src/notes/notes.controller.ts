@@ -19,25 +19,25 @@ export class NotesController {
 
   @Post()
   create(@Req() req: Request, @Body() dto: CreateNoteDto) {
-    const userId = req.jwtPayload?.sub || '';
+    const userId = req.user?.id || '';
     return this.notesService.create(userId, dto.title, dto.content);
   }
 
   @Get()
   list(@Req() req: Request) {
-    const userId = req.jwtPayload?.sub || '';
+    const userId = req.user?.id || '';
     return this.notesService.listForUser(userId);
   }
 
   @Get(':id')
   get(@Req() req: Request, @Param('id') id: string) {
-    const userId = req.jwtPayload?.sub || '';
+    const userId = req.user?.id || '';
     return this.notesService.findOne(userId, id);
   }
 
   @Patch(':id')
   patch(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateNoteDto) {
-    const userId = req.jwtPayload?.sub || '';
+    const userId = req.user?.id || '';
     return this.notesService.update(userId, id, dto as any);
   }
 }
