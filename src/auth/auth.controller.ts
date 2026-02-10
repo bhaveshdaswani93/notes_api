@@ -95,6 +95,8 @@ export class AuthController {
    * POST /auth/refresh
    * Refresh access token using refresh token
    * Body: { refreshToken: string }
+   * Note: Token refresh is not yet fully implemented.
+   * For now, users should re-authenticate when tokens expire.
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
@@ -122,7 +124,7 @@ export class AuthController {
     } catch (error) {
       throw new BadRequestException({
         error: 'refresh_failed',
-        message: error.message || 'Failed to refresh token',
+        message: error.message || 'Token refresh not implemented. Please re-authenticate.',
       });
     }
   }
@@ -150,12 +152,11 @@ export class AuthController {
   /**
    * POST /auth/logout
    * Gets Scalekit logout URL
-   * Body: { idToken?: string }
    */
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Body('idToken') idToken?: string) {
-    const logoutUrl = await this.authService.getLogoutUrl(idToken);
+  async logout() {
+    const logoutUrl = await this.authService.getLogoutUrl();
 
     return {
       logoutUrl,

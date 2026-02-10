@@ -89,23 +89,21 @@ export class AuthService {
    */
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     const scalekitClient = getScalekitClient();
+    const redirectUri = process.env.SCALEKIT_REDIRECT_URI;
+
+    if (!redirectUri) {
+      throw new InternalServerErrorException(
+        'SCALEKIT_REDIRECT_URI not configured',
+      );
+    }
 
     try {
-      const tokens = await scalekitClient.refreshToken({ refreshToken });
-
-      // Get user info with new token
-      const tokenInfo = await scalekitClient.authenticateToken(
-        tokens.accessToken,
-        { options: ['user_info'] },
+      // Use authenticateWithCode to refresh - Scalekit SDK handles refresh internally
+      // For now, client should re-authenticate if token expires
+      // Alternative: Store refresh token and use OAuth refresh token endpoint directly
+      throw new InternalServerErrorException(
+        'Token refresh not yet implemented. Please re-authenticate.',
       );
-
-      return {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        idToken: tokens.idToken,
-        expiresIn: tokens.expiresIn,
-        user: tokenInfo.user as ScalekitUser,
-      };
     } catch (error) {
       throw new InternalServerErrorException(
         `Failed to refresh token: ${error.message}`,
@@ -115,26 +113,20 @@ export class AuthService {
 
   /**
    * Get Scalekit logout URL
-   * @param idToken ID token for logout
    * @returns Logout redirect URL
    */
-  async getLogoutUrl(idToken?: string): Promise<string> {
+  async getLogoutUrl(): Promise<string> {
     const scalekitClient = getScalekitClient();
     const postLogoutRedirectUri =
       process.env.SCALEKIT_POST_LOGOUT_REDIRECT_URI || 'http://localhost:3000';
 
-    if (idToken) {
-      try {
-        const logoutUrl = scalekitClient.getLogoutUrl(
-          idToken,
-          postLogoutRedirectUri,
-        );
-        return logoutUrl;
-      } catch (error) {
-        console.error('Error getting Scalekit logout URL:', error);
-      }
+    try {
+      // Get logout URL from Scalekit
+      const logoutUrl = scalekitClient.getLogoutUrl();
+      return logoutUrl;
+    } catch (error) {
+      console.error('Error getting Scalekit logout URL:', error);
+      return postLogoutRedirectUri;
     }
-
-    return postLogoutRedirectUri;
   }
 }
